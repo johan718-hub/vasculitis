@@ -131,6 +131,17 @@
     .footer-inner { display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; }
     .disclaimer { opacity:.8; }
     @keyframes fade { from {opacity:.3; transform:translateY(5px)} to {opacity:1; transform:translateY(0)} }
+
+    /* Ampliación de imágenes del carrusel */
+    .carousel .slide img { cursor: zoom-in; }
+    .image-lightbox { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 24px; background: rgba(2, 18, 32, .92); }
+    .image-lightbox.open { display: flex; }
+    .lightbox-content { position: relative; max-width: min(100%, 1000px); max-height: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .lightbox-content img { display: block; max-width: 100%; max-height: calc(100vh - 100px); object-fit: contain; border-radius: 12px; box-shadow: 0 18px 60px #0008; background: white; }
+    .lightbox-caption { color: #e8fbff; text-align: center; font-size: 14px; }
+    .lightbox-close { position: fixed; top: 15px; right: 18px; width: 44px; height: 44px; border: 1px solid #ffffff77; border-radius: 50%; background: #082f50; color: white; font-size: 28px; cursor: pointer; line-height: 1; }
+    .lightbox-close:hover { background: #13a5b4; }
+
     @media (max-width: 900px) {
       .nav-links { gap:13px; font-size:12px; }
       .brand { min-width:unset; }
@@ -193,7 +204,7 @@
     </a>
     <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="navLinks">☰ Menú</button>
     <nav class="nav-links" id="navLinks" aria-label="Navegación principal">
-      <a class="active" href="#inicio">Inicio</a><a href="#que-es">¿Qué es?</a><a href="#sintomas">Síntomas</a><a href="#prevencion">Prevención</a><a href="#galeria">Galería</a><a href="#contacto">Contacto</a>
+      <a class="active" href="#inicio">Inicio</a><a href="#que-es">¿Qué es?</a><a href="#sintomas">Síntomas</a><a href="#prevencion">Prevención</a><a href="#contacto">Contacto</a>
     </nav>
   </div>
 </header>
@@ -310,16 +321,7 @@
     </section>
   </div>
 
-  <section class="gallery" id="galeria">
-    <div class="container">
-      <div class="gallery-head"><div><div class="section-kicker">— Aprende visualmente</div><h2>Galería educativa</h2><p class="section-lead" style="margin-bottom:0">Material visual para acompañar la información de la feria.</p></div></div>
-      <div class="gallery-grid">
-        <div class="gallery-item"><img src="assets/afiche-vasculitis.jpg" alt="Afiche completo de vasculitis"><div class="gallery-label">Afiche de la feria</div></div>
-        <div class="gallery-item"><img src="assets/vaso-sanguineo.jpg" alt="Ilustración de un vaso sanguíneo"><div class="gallery-label">Vasos sanguíneos</div></div>
-        <div class="gallery-item"><img src="assets/tipos-vasculitis.jpg" alt="Ilustraciones de tipos de vasculitis"><div class="gallery-label">Tipos y manifestaciones</div></div>
-      </div>
-    </div>
-  </section>
+
 
   <section class="contact" id="contacto">
     <div class="container contact-card">
@@ -332,6 +334,13 @@
 <footer>
   <div class="container footer-inner"><span>© Feria de la Salud · Vasculitis</span><span class="disclaimer">Contenido educativo. No sustituye la valoración ni las indicaciones de un profesional de salud.</span></div>
 </footer>
+  <div class="image-lightbox" id="imageLightbox" role="dialog" aria-modal="true" aria-label="Imagen ampliada" aria-hidden="true">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Cerrar imagen ampliada">×</button>
+    <div class="lightbox-content">
+      <img id="lightboxImage" src="" alt="">
+      <div class="lightbox-caption" id="lightboxCaption"></div>
+    </div>
+  </div>
 <script>
   const slides = [...document.querySelectorAll('.slide')];
   const dotsContainer = document.getElementById('dots');
@@ -358,6 +367,36 @@
     if (e.key === 'ArrowLeft') showSlide(current - 1);
     if (e.key === 'ArrowRight') showSlide(current + 1);
   });
+  // Al tocar una imagen del carrusel, se abre ampliada; se cierra con X, fondo o Escape.
+  const lightbox = document.getElementById('imageLightbox');
+  const lightboxImage = document.getElementById('lightboxImage');
+  const lightboxCaption = document.getElementById('lightboxCaption');
+  const lightboxClose = document.getElementById('lightboxClose');
+  document.querySelectorAll('.carousel .slide img').forEach(img => {
+    img.setAttribute('tabindex', '0');
+    img.setAttribute('role', 'button');
+    img.setAttribute('aria-label', 'Ampliar imagen: ' + img.alt);
+    const openImage = () => {
+      lightboxImage.src = img.src;
+      lightboxImage.alt = img.alt;
+      lightboxCaption.textContent = img.alt;
+      lightbox.classList.add('open');
+      lightbox.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      lightboxClose.focus();
+    };
+    img.addEventListener('click', openImage);
+    img.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openImage(); } });
+  });
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    lightbox.setAttribute('aria-hidden', 'true');
+    lightboxImage.src = '';
+    document.body.style.overflow = '';
+  }
+  lightboxClose.addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox(); });
   const menuToggle = document.getElementById('menuToggle');
   const navLinks = document.getElementById('navLinks');
   menuToggle.addEventListener('click', () => {
